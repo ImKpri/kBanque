@@ -104,15 +104,16 @@ Citizen.CreateThread(function ()
 end)
 
 local isBankOpen = false
+
 OpenBanking = function()
     local balance = 0
     ESX.TriggerServerCallback('kBanque:getBalance', function(serverBalance)
         balance = serverBalance
-    ESX.ShowNotification("Votre solde est de ~g~$" .. balance)
+        ESX.ShowNotification("Votre solde est de ~g~$" .. balance)
     end)
     FreezeEntityPosition(PlayerPedId(), true)
     local mainbk = RageUI.CreateMenu("Banque", "Interaction") 
-    --mainbk:SetSizeWidth(99)
+    local historique = RageUI.CreateSubMenu(mainbk, "Banque", "Interaction") 
     
     RageUI.Visible(mainbk, true)
     
@@ -148,9 +149,25 @@ OpenBanking = function()
                         end
                     end
                 })
+                RageUI.Line()
+                RageUI.Button("Historique", nil, {RightLabel = '→→'}, true, {
+                    onSelected = function()
+                        ESX.TriggerServerCallback('kBanque:getTransactionHistory', function(transactions)
+                            transactionHistory = transactions
+                        end)
+                    end
+                }, historique)
+            end)
+            
+            RageUI.IsVisible(historique, function()
+                if transactionHistory then
+                    for _, transaction in ipairs(transactionHistory) do
+                        RageUI.Button(string.format('%s $%s - %s', transaction.type, transaction.amount, transaction.date), nil, {}, true, {})
+                    end
+                end
             end)
 
-            if not RageUI.Visible(mainbk) then
+            if not RageUI.Visible(mainbk) and not RageUI.Visible(historique) then
                 FreezeEntityPosition(PlayerPedId(), false)
                 mainbk = RMenu:DeleteType('mainbk')
             end
